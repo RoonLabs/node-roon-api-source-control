@@ -29,7 +29,7 @@ function RoonApiSourceSelection(roon, opts) {
         }
     });
 
-    this.services: [ this._svc ];
+    this.services = [ this._svc ];
 }
 
 RoonApiSourceSelection.prototype.new_device = function(o) {
