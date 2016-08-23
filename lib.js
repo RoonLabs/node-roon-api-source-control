@@ -10,21 +10,21 @@ function RoonApiSourceSelection(roon, opts) {
                 subscribe_name:   "subscribe_controls",
                 unsubscribe_name: "unsubscribe_controls",
                 start: (req) => {
-                    req.send_continue("Subscribed", { source_selection_controls: this._objs.reduce((p,e) => p.push(e.data.state) && p, []) });
+                    req.send_continue("Subscribed", { controls: this._objs.reduce((p,e) => p.push(e.state) && p, []) });
                 }
             }
         ],
         methods: {
             get_all: (req) =>{
-                req.send_complete("Success", { source_selection_controls: this._objs.reduce((p,e) => p.push(e.data.state) && p, []) });
+                req.send_complete("Success", { controls: this._objs.reduce((p,e) => p.push(e.state) && p, []) });
             },
             standby: (req) => {
-                var d = this._objs[req.body.key].data;
+                var d = this._objs[req.body.key];
                 d.standby(req);
             },
-            activate_source: (req) => {
-                var d = this._objs[req.body.key].data;
-                d.activate_source(req);
+            convenience_switch: (req) => {
+                var d = this._objs[req.body.key];
+                d.convenience_switch(req);
             }
         }
     });
@@ -33,17 +33,17 @@ function RoonApiSourceSelection(roon, opts) {
 }
 
 RoonApiSourceSelection.prototype.new_device = function(o) {
-    o.state.key = this._id++;
+    o.state.key = (this._id++).toString();
     this._objs[o.state.key] = o;
-    this._svc.send_continue_all('subscribe', "Changed", { controls_added: [ o.state ] });
+    this._svc.send_continue_all('subscribe_controls', "Changed", { controls_added: [ o.state ] });
     return {
         destroy: () => {
             this._svc.send_continue_all('subscribe_controls', "Changed", { controls_removed: [ o.key ] });
-            delete(this._objs[o.key]);
+            delete(this._objs[o.state.key]);
         },
         update_state: (state) => {
             for (let x in state) if (o.state[x] !== state[x]) o.state[x] = state[x];
-            _svc.send_continue_all('subscribe_controls', "Changed", { controls_changed: [ o.state ] });
+            this._svc.send_continue_all('subscribe_controls', "Changed", { controls_changed: [ o.state ] });
         }
     }
 };
