@@ -19,11 +19,11 @@ function RoonApiSourceSelection(roon, opts) {
                 req.send_complete("Success", { controls: this._objs.reduce((p,e) => p.push(e.state) && p, []) });
             },
             standby: (req) => {
-                var d = this._objs[req.body.key];
+                var d = this._objs[req.body.control_key];
                 d.standby(req);
             },
             convenience_switch: (req) => {
-                var d = this._objs[req.body.key];
+                var d = this._objs[req.body.control_key];
                 d.convenience_switch(req);
             }
         }
@@ -33,13 +33,13 @@ function RoonApiSourceSelection(roon, opts) {
 }
 
 RoonApiSourceSelection.prototype.new_device = function(o) {
-    o.state.key = (this._id++).toString();
-    this._objs[o.state.key] = o;
+    o.state.control_key = (this._id++).toString();
+    this._objs[o.state.control_key] = o;
     this._svc.send_continue_all('subscribe_controls', "Changed", { controls_added: [ o.state ] });
     return {
         destroy: () => {
-            this._svc.send_continue_all('subscribe_controls', "Changed", { controls_removed: [ o.key ] });
-            delete(this._objs[o.state.key]);
+            this._svc.send_continue_all('subscribe_controls', "Changed", { controls_removed: [ o.control_key ] });
+            delete(this._objs[o.state.control_key]);
         },
         update_state: (state) => {
             for (let x in state) if (o.state[x] !== state[x]) o.state[x] = state[x];
