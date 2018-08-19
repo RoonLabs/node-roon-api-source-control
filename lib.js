@@ -38,7 +38,7 @@ RoonApiSourceSelection.prototype.new_device = function(o) {
     this._svc.send_continue_all('subscribe_controls', "Changed", { controls_added: [ o.state ] });
     return {
         destroy: () => {
-            this._svc.send_continue_all('subscribe_controls', "Changed", { controls_removed: [ o.control_key ] });
+            this._svc.send_continue_all('subscribe_controls', "Changed", { controls_removed: [ o.state.control_key ] });
             delete(this._objs[o.state.control_key]);
         },
         update_state: (state) => {
