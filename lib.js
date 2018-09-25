@@ -1,8 +1,7 @@
 "use strict";
 
 function RoonApiSourceSelection(roon, opts) {
-    this._objs = [];
-    this._id = 1;
+    this._objs = {};
 
     this._svc = roon.register_service("com.roonlabs.sourcecontrol:1", {
         subscriptions: [
@@ -10,13 +9,13 @@ function RoonApiSourceSelection(roon, opts) {
                 subscribe_name:   "subscribe_controls",
                 unsubscribe_name: "unsubscribe_controls",
                 start: (req) => {
-                    req.send_continue("Subscribed", { controls: this._objs.reduce((p,e) => p.push(e.state) && p, []) });
+                    req.send_continue("Subscribed", { controls: Object.values(this._objs).reduce((p,e) => p.push(e.state) && p, []) });
                 }
             }
         ],
         methods: {
-            get_all: (req) =>{
-                req.send_complete("Success", { controls: this._objs.reduce((p,e) => p.push(e.state) && p, []) });
+            get_all: (req) => {
+                req.send_complete("Success", { controls: Object.values(this._objs).reduce((p,e) => p.push(e.state) && p, []) });
             },
             standby: (req) => {
                 var d = this._objs[req.body.control_key];
@@ -33,7 +32,11 @@ function RoonApiSourceSelection(roon, opts) {
 }
 
 RoonApiSourceSelection.prototype.new_device = function(o) {
-    o.state.control_key = (this._id++).toString();
+    o.state.control_key = o.state.control_key || "1";
+
+    if (this._objs[o.state.control_key])
+        throw new Error('Must set control key to unique id');
+    
     this._objs[o.state.control_key] = o;
     this._svc.send_continue_all('subscribe_controls', "Changed", { controls_added: [ o.state ] });
     return {
@@ -45,7 +48,7 @@ RoonApiSourceSelection.prototype.new_device = function(o) {
             for (let x in state) if (o.state[x] !== state[x]) o.state[x] = state[x];
             this._svc.send_continue_all('subscribe_controls', "Changed", { controls_changed: [ o.state ] });
         }
-    }
+    };
 };
 
 exports = module.exports = RoonApiSourceSelection;
