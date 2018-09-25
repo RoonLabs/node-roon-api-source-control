@@ -2,8 +2,6 @@
 
 function RoonApiSourceSelection(roon, opts) {
     this._objs = {};
-    this._id = 1;
-    this.opts = Object.assign({}, opts);
 
     this._svc = roon.register_service("com.roonlabs.sourcecontrol:1", {
         subscriptions: [
@@ -34,16 +32,10 @@ function RoonApiSourceSelection(roon, opts) {
 }
 
 RoonApiSourceSelection.prototype.new_device = function(o) {
-    if (this.opts.self_managed_keys) {
-        if (!o.state.control_key) {
-            throw new Error('Must set control key when using self managed control keys');
-        }
-        if (this._objs[o.state.control_key]) {
-            throw new Error('Must set control key to unique id');
-        }
-    } else {
-        o.state.control_key = (this._id++).toString();
-    }
+    o.state.control_key = o.state.control_key || "1";
+
+    if (this._objs[o.state.control_key])
+        throw new Error('Must set control key to unique id');
     
     this._objs[o.state.control_key] = o;
     this._svc.send_continue_all('subscribe_controls', "Changed", { controls_added: [ o.state ] });
